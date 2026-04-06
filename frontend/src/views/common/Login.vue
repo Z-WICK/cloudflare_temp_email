@@ -48,7 +48,7 @@ const credential = ref('')
 const emailName = ref("")
 const emailDomain = ref("")
 const cfToken = ref("")
-const enableRandomSubdomain = ref(true)
+const enableRandomSubdomain = ref(false)
 const loginCfToken = ref("")
 const loginTurnstileRef = ref(null)
 const loginMethod = ref('credential') // 'credential' or 'password'
@@ -256,10 +256,9 @@ const canUseRandomSubdomain = computed(() => {
 });
 
 watch(canUseRandomSubdomain, (enabled) => {
-    if (!enabled) {
-        enableRandomSubdomain.value = false;
-    }
-});
+    // Random subdomain toggle is hidden in UI, so sync it from capability.
+    enableRandomSubdomain.value = enabled;
+}, { immediate: true });
 
 const domainsOptions = computed(() => {
     // if user has role, return role domains
@@ -299,13 +298,18 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div>
-        <n-alert v-if="userSettings.user_email" :show-icon="false" :bordered="false" closable>
+    <section class="auth-shell">
+        <div class="hero-copy">
+            <p class="eyebrow">Cloudflare Temp Email</p>
+            <h2 class="hero-title">{{ t('getNewEmail') }}</h2>
+            <p class="hero-desc">Create isolated inboxes in seconds, then inspect and manage messages from one clean workspace.</p>
+        </div>
+        <n-alert v-if="userSettings.user_email" class="bind-alert" :show-icon="false" :bordered="false" closable>
             <span>{{ t('bindUserInfo') }}</span>
         </n-alert>
-        <n-tabs v-if="openSettings.fetched" v-model:value="tabValue" size="large" justify-content="space-evenly">
+        <n-tabs class="auth-tabs" v-if="openSettings.fetched" v-model:value="tabValue" size="large" type="segment" animated justify-content="space-evenly">
             <n-tab-pane name="signin" :tab="loginAndBindTag">
-                <n-form>
+                <n-form class="auth-form">
                     <div v-if="loginMethod === 'password'">
                         <n-form-item-row :label="t('email')" required>
                             <n-input v-model:value="loginAddress" />
@@ -332,13 +336,13 @@ onMounted(async () => {
                         </n-button>
                     </div>
 
-                    <n-button @click="login" :loading="loading" type="primary" block secondary strong>
+                    <n-button class="primary-action" @click="login" :loading="loading" type="primary" block strong>
                         <template #icon>
                             <n-icon :component="EmailOutlined" />
                         </template>
                         {{ loginAndBindTag }}
                     </n-button>
-                    <n-button v-if="showNewAddressTab" @click="tabValue = 'register'" block secondary strong>
+                    <n-button class="secondary-action" v-if="showNewAddressTab" @click="tabValue = 'register'" block secondary strong>
                         <template #icon>
                             <n-icon :component="NewLabelOutlined" />
                         </template>
@@ -348,15 +352,14 @@ onMounted(async () => {
             </n-tab-pane>
             <n-tab-pane v-if="showNewAddressTab" name="register" :tab="t('getNewEmail')">
                 <n-spin :show="generateNameLoading">
-                    <n-form>
-                        <span>
+                    <n-form class="auth-form">
+                        <div class="tip-block">
                             <p v-if="!openSettings.disableCustomAddressName">{{ t("getNewEmailTip1") +
                                 addressRegex.source }}</p>
                             <p v-if="!openSettings.disableCustomAddressName">{{ t("getNewEmailTip2") }}</p>
                             <p>{{ t("getNewEmailTip3") }}</p>
-                        </span>
-                        <n-button v-if="!openSettings.disableCustomAddressName" @click="generateName"
-                            style="margin-bottom: 10px;">
+                        </div>
+                        <n-button class="secondary-action" v-if="!openSettings.disableCustomAddressName" @click="generateName">
                             {{ t('generateName') }}
                         </n-button>
                         <n-input-group>
@@ -372,7 +375,7 @@ onMounted(async () => {
                         </n-input-group>
                         <!-- Random subdomain forced on, checkbox hidden -->
                         <Turnstile v-model:value="cfToken" />
-                        <n-button type="primary" block secondary strong @click="newEmail" :loading="loading">
+                        <n-button class="primary-action" type="primary" block strong @click="newEmail" :loading="loading">
                             <template #icon>
                                 <n-icon :component="NewLabelOutlined" />
                             </template>
@@ -382,34 +385,220 @@ onMounted(async () => {
                 </n-spin>
             </n-tab-pane>
             <n-tab-pane name="help" :tab="t('help')">
-                <n-alert :show-icon="false" :bordered="false">
+                <n-alert class="help-alert" :show-icon="false" :bordered="false">
                     <span>{{ t('pleaseGetNewEmail') }}</span>
                 </n-alert>
                 <AdminContact />
             </n-tab-pane>
         </n-tabs>
-    </div>
+    </section>
 </template>
 
 
 <style scoped>
-.n-alert {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    text-align: center;
+.auth-shell {
+    max-width: 860px;
+    margin: 8px auto 0;
+    padding: 8px 6px;
+    text-align: left;
+    animation: rise-in 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.n-form .n-button {
-    margin-top: 10px;
+.hero-copy {
+    margin: 8px 4px 14px;
+}
+
+.eyebrow {
+    margin: 0 0 6px;
+    color: color-mix(in srgb, var(--text-muted) 72%, #8fb3ff);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero-title {
+    margin: 0;
+    font-size: clamp(1.36rem, 2.2vw, 1.94rem);
+    line-height: 1.25;
+    color: var(--text-strong);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+.hero-desc {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    max-width: 62ch;
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+.bind-alert {
+    margin: 6px 0 12px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--glass-top) 62%, transparent);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(14px) saturate(160%);
+}
+
+.auth-tabs {
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background:
+        linear-gradient(140deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: var(--glass-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-tabs::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+        radial-gradient(100% 58% at 6% 0%, rgba(255, 255, 255, 0.52), transparent 56%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 34%);
+}
+
+.auth-tabs :deep(.n-tabs-nav) {
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--glass-top) 58%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glass-border) 78%, transparent);
+    backdrop-filter: blur(14px);
+}
+
+.auth-tabs :deep(.n-tabs-tab) {
+    min-height: 42px;
+}
+
+.auth-tabs :deep(.n-base-selection-label) {
+    color: var(--text-strong);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding-top: 8px;
+}
+
+.auth-form :deep(.n-form-item-label__text) {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.auth-form :deep(.n-input),
+.auth-form :deep(.n-base-selection) {
+    border-radius: 13px;
+    backdrop-filter: blur(8px);
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.auth-form :deep(.n-input:focus-within),
+.auth-form :deep(.n-base-selection:focus-within) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -18px rgba(72, 112, 201, 0.85);
+}
+
+.tip-block {
+    margin-bottom: 4px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+    background: color-mix(in srgb, var(--glass-top) 52%, transparent);
+}
+
+.tip-block p {
+    margin: 0 0 7px;
+    color: var(--text-muted);
+    line-height: 1.5;
 }
 
 .switch-login-button {
     display: flex;
     justify-content: center;
-    margin: 10px 0;
+    margin: 2px 0;
 }
 
-.n-form {
-    text-align: left;
+.primary-action,
+.secondary-action {
+    margin-top: 5px;
+    min-height: 44px;
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
+}
+
+.primary-action:hover,
+.secondary-action:hover {
+    transform: translateY(-1px);
+}
+
+.help-alert {
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+    background: color-mix(in srgb, var(--glass-top) 54%, transparent);
+}
+
+@keyframes rise-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@media (max-width: 768px) {
+    .auth-shell {
+        margin-top: 4px;
+        padding: 2px;
+    }
+
+    .hero-copy {
+        margin: 4px 2px 10px;
+    }
+
+    .hero-desc {
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+
+    .auth-tabs {
+        border-radius: 16px;
+    }
+
+    .tip-block {
+        padding: 8px 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-shell {
+        animation: none;
+    }
+
+    .auth-form :deep(.n-input),
+    .auth-form :deep(.n-base-selection),
+    .primary-action,
+    .secondary-action {
+        transition: none;
+    }
+
+    .auth-form :deep(.n-input:focus-within),
+    .auth-form :deep(.n-base-selection:focus-within),
+    .primary-action:hover,
+    .secondary-action:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .auth-tabs {
+        backdrop-filter: none;
+    }
 }
 </style>

@@ -130,15 +130,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="index-shell">
     <div v-if="useSimpleIndex">
       <SimpleIndex />
     </div>
     <div v-else>
       <AddressBar />
-      <n-tabs v-if="settings.address" type="card" v-model:value="indexTab" :placement="globalTabplacement">
+      <n-tabs class="workspace-tabs" v-if="settings.address" type="card" animated v-model:value="indexTab" :placement="globalTabplacement">
         <template #prefix v-if="!isMobile">
-          <n-button @click="useSimpleIndex = true" tertiary size="small">
+          <n-button class="mode-button" @click="useSimpleIndex = true" tertiary size="small">
             <template #icon>
               <n-icon>
                 <FullscreenExitOutlined />
@@ -148,10 +148,10 @@ onMounted(() => {
           </n-button>
         </template>
         <n-tab-pane name="mailbox" :tab="t('mailbox')">
-          <div v-if="showMailIdQuery" style="margin-bottom: 10px;">
+          <div v-if="showMailIdQuery" class="mail-query">
             <n-input-group>
               <n-input v-model:value="mailIdQuery" />
-              <n-button @click="queryMail" type="primary" tertiary>
+              <n-button class="query-button" @click="queryMail" type="primary" tertiary>
                 {{ t('query') }}
               </n-button>
             </n-input-group>
@@ -189,3 +189,105 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.index-shell {
+  margin-top: 10px;
+  animation: panel-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.workspace-tabs {
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(146deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
+  border-radius: 20px;
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: var(--glass-shadow);
+  padding: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace-tabs::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(100% 60% at 0% 0%, rgba(255, 255, 255, 0.5), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, transparent 38%);
+}
+
+.workspace-tabs :deep(.n-tabs-nav) {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 72%, transparent);
+  background: color-mix(in srgb, var(--glass-top) 56%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.workspace-tabs :deep(.n-tabs-tab) {
+  min-height: 42px;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.workspace-tabs :deep(.n-tabs-tab:hover) {
+  transform: translateY(-1px);
+}
+
+.workspace-tabs :deep(.n-tabs-tab__label) {
+  color: var(--text-strong);
+}
+
+.mode-button {
+  min-height: 44px;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mode-button:hover {
+  transform: translateY(-1px);
+}
+
+.mail-query {
+  margin-bottom: 12px;
+}
+
+.query-button {
+  min-width: 86px;
+  min-height: 44px;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .workspace-tabs {
+    border-radius: 16px;
+    padding: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .index-shell {
+    animation: none;
+  }
+
+  .workspace-tabs :deep(.n-tabs-tab),
+  .mode-button {
+    transition: none;
+  }
+
+  .workspace-tabs :deep(.n-tabs-tab:hover),
+  .mode-button:hover {
+    transform: none;
+  }
+}
+</style>

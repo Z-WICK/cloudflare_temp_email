@@ -268,20 +268,23 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div>
-        <n-page-header>
+    <div class="header-shell">
+        <n-page-header class="header-panel">
             <template #title>
-                <h3>{{ openSettings.title || t('title') }}</h3>
+                <div class="title-block">
+                    <h3 class="site-title">{{ openSettings.title || t('title') }}</h3>
+                    <span class="site-subtitle">Temporary inbox for fast verification workflows</span>
+                </div>
             </template>
             <template #avatar>
-                <div @click="logoClick">
-                    <n-avatar style="margin-left: 10px;" src="/logo.png" />
-                </div>
+                <button class="logo-button" @click="logoClick" type="button" aria-label="Open hidden admin shortcut">
+                    <n-avatar src="/logo.png" />
+                </button>
             </template>
             <template #extra>
                 <n-space>
                     <n-menu v-if="!isMobile" mode="horizontal" :options="menuOptions" responsive />
-                    <n-button v-else :text="true" @click="showMobileMenu = !showMobileMenu" style="margin-right: 10px;">
+                    <n-button v-else class="mobile-menu-button" :text="true" @click="showMobileMenu = !showMobileMenu">
                         <template #icon>
                             <n-icon :component="MenuFilled" />
                         </template>
@@ -295,7 +298,7 @@ onMounted(async () => {
                 <n-menu :options="menuOptions" />
             </n-drawer-content>
         </n-drawer>
-        <n-modal v-model:show="showAuth" :closable="false" :closeOnEsc="false" :maskClosable="false" preset="dialog"
+        <n-modal v-model:show="showAuth" class="access-modal" :closable="false" :closeOnEsc="false" :maskClosable="false" preset="dialog"
             :title="t('accessHeader')">
             <p>{{ t('accessTip') }}</p>
             <n-input v-model:value="auth" type="password" show-password-on="click" />
@@ -310,31 +313,120 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.n-layout-header {
+.header-shell {
+    margin: 4px 0 12px;
+}
+
+.header-panel {
+    padding: 10px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background:
+        linear-gradient(130deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
+    backdrop-filter: blur(22px) saturate(175%);
+    box-shadow: var(--glass-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.header-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+        radial-gradient(80% 60% at 4% 0%, rgba(255, 255, 255, 0.54), transparent 55%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, transparent 34%);
+    pointer-events: none;
+}
+
+.title-block {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.site-title {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.2;
+    color: var(--text-strong);
+}
+
+.site-subtitle {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+
+.logo-button {
+    border: 1px solid color-mix(in srgb, var(--glass-border) 75%, transparent);
+    background: color-mix(in srgb, var(--glass-top) 48%, transparent);
+    padding: 4px;
+    margin-left: 2px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-}
-
-.n-alert {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.n-card {
-    margin-top: 10px;
-}
-
-.center {
-    display: flex;
-    text-align: left;
-    place-items: center;
     justify-content: center;
-    margin: 20px;
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease, border-color 180ms ease;
 }
 
-.n-form .n-button {
-    margin-top: 10px;
+.logo-button:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--glass-top) 70%, transparent);
+}
+
+.mobile-menu-button {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.header-shell :deep(.n-page-header__title) {
+    margin-inline-start: 8px;
+}
+
+.header-shell :deep(.n-menu-item-content) {
+    border-radius: 12px;
+}
+
+.header-shell :deep(.n-page-header-header__extra) {
+    align-items: center;
+}
+
+.access-modal :deep(.n-dialog) {
+    border-radius: 18px;
+    border: 1px solid var(--glass-border);
+    background:
+        linear-gradient(140deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
+    backdrop-filter: blur(20px) saturate(170%);
+}
+
+@media (max-width: 768px) {
+    .header-panel {
+        border-radius: 16px;
+        padding: 8px 10px;
+    }
+
+    .site-title {
+        font-size: 0.98rem;
+    }
+
+    .site-subtitle {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .logo-button {
+        transition: none;
+    }
+
+    .logo-button:hover {
+        transform: none;
+    }
 }
 </style>
