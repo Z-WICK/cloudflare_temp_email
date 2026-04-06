@@ -4,7 +4,7 @@ import { Jwt } from 'hono/utils/jwt'
 import { isAddressCountLimitReached } from "../utils"
 import { unbindTelegramByAddress } from '../telegram_api/common';
 import i18n from '../i18n';
-import { updateAddressUpdatedAt, commonGetUserRole } from '../common';
+import { updateAddressUpdatedAt, commonGetUserRole, cleanupEmailRoutingRuleByAddress } from '../common';
 
 const UserBindAddressModule = {
     bind: async (c: Context<HonoCustomType>) => {
@@ -69,10 +69,10 @@ const UserBindAddressModule = {
             return c.text(msgs.InvalidAddressOrUserTokenMsg, 400)
         }
         // check if address exists
-        const db_address_id = await c.env.DB.prepare(
-            `SELECT id FROM address where id = ?`
-        ).bind(address_id).first("id");
-        if (!db_address_id) {
+        const dbAddressName = await c.env.DB.prepare(
+            `SELECT name FROM address where id = ?`
+        ).bind(address_id).first<string>("name");
+        if (!dbAddressName) {
             return c.text(msgs.AddressNotFoundMsg, 400)
         }
         // check if user exists
@@ -92,6 +92,12 @@ const UserBindAddressModule = {
             }
         } catch (e) {
             return c.text(msgs.OperationFailedMsg, 500)
+        }
+        const bindCount = await c.env.DB.prepare(
+            `SELECT COUNT(*) as count FROM users_address WHERE address_id = ?`
+        ).bind(address_id).first<number>("count");
+        if (!bindCount || bindCount <= 0) {
+            cleanupEmailRoutingRuleByAddress(c, dbAddressName);
         }
         return c.json({ success: true })
     },
