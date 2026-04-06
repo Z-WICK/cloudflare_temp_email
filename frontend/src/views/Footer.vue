@@ -52,7 +52,7 @@ const { t } = useI18n({
     background:
         linear-gradient(148deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
     backdrop-filter: blur(14px) saturate(165%);
-    box-shadow: 0 14px 38px -32px rgba(41, 69, 129, 0.75);
+    box-shadow: 0 14px 38px -32px rgba(82, 97, 126, 0.36);
 }
 
 .footer-inner :deep(.n-text) {

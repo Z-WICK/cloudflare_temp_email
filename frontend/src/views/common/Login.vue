@@ -501,7 +501,7 @@ onMounted(async () => {
 .auth-form :deep(.n-input:focus-within),
 .auth-form :deep(.n-base-selection:focus-within) {
     transform: translateY(-1px);
-    box-shadow: 0 10px 24px -18px rgba(72, 112, 201, 0.85);
+    box-shadow: 0 10px 24px -18px rgba(98, 120, 158, 0.42);
 }
 
 .tip-block {

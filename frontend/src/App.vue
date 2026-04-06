@@ -20,11 +20,11 @@ const localeConfig = computed(() => locale.value == 'zh' ? zhCN : null)
 const themeClass = computed(() => isDark.value ? 'theme-dark' : 'theme-light')
 const themeOverrides = computed(() => ({
   common: {
-    primaryColor: isDark.value ? '#7DD3FC' : '#0EA5E9',
-    primaryColorHover: isDark.value ? '#BAE6FD' : '#0284C7',
-    primaryColorPressed: isDark.value ? '#38BDF8' : '#0369A1',
-    infoColor: isDark.value ? '#93C5FD' : '#2563EB',
-    successColor: isDark.value ? '#86EFAC' : '#16A34A',
+    primaryColor: isDark.value ? '#9db9da' : '#7396c6',
+    primaryColorHover: isDark.value ? '#b8cbe4' : '#6288bd',
+    primaryColorPressed: isDark.value ? '#88a9cf' : '#5479af',
+    infoColor: isDark.value ? '#b7c8de' : '#6d8eb9',
+    successColor: isDark.value ? '#9cc5b1' : '#669d83',
     borderRadius: '14px',
     fontFamily: '"Plus Jakarta Sans", "Noto Sans SC", "PingFang SC", sans-serif',
   },
@@ -160,7 +160,7 @@ body {
 .n-select:focus-within,
 .n-button:focus-visible,
 .n-base-selection:focus-within {
-  outline: 2px solid rgba(8, 145, 178, 0.35);
+  outline: 2px solid rgba(115, 144, 186, 0.34);
   outline-offset: 2px;
 }
 
@@ -189,7 +189,7 @@ body {
   border: 1px solid var(--glass-border);
   background:
     linear-gradient(136deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(150%);
   box-shadow: var(--glass-shadow);
   position: relative;
   overflow: hidden;
@@ -214,31 +214,31 @@ body {
 }
 
 .app-shell.theme-light {
-  --text-strong: #07102a;
-  --text-muted: #3b4a66;
-  --glass-border: rgba(255, 255, 255, 0.7);
-  --glass-top: rgba(255, 255, 255, 0.68);
-  --glass-bottom: rgba(217, 231, 255, 0.28);
-  --glass-shadow: 0 28px 60px -34px rgba(24, 55, 125, 0.55);
+  --text-strong: #1c2536;
+  --text-muted: #5b677b;
+  --glass-border: rgba(255, 255, 255, 0.64);
+  --glass-top: rgba(255, 255, 255, 0.62);
+  --glass-bottom: rgba(229, 236, 248, 0.34);
+  --glass-shadow: 0 24px 50px -34px rgba(74, 94, 133, 0.36);
   color: var(--text-strong);
   background:
-    radial-gradient(circle at 12% 16%, rgba(214, 234, 255, 0.92) 0%, transparent 36%),
-    radial-gradient(circle at 92% -10%, rgba(227, 238, 255, 0.9) 0%, transparent 42%),
-    linear-gradient(160deg, #f4f8ff 0%, #edf4ff 44%, #e6eefc 100%);
+    radial-gradient(circle at 12% 16%, rgba(226, 234, 246, 0.92) 0%, transparent 38%),
+    radial-gradient(circle at 92% -10%, rgba(234, 239, 248, 0.88) 0%, transparent 44%),
+    linear-gradient(160deg, #f8faff 0%, #f3f6fb 46%, #edf2f9 100%);
 }
 
 .app-shell.theme-dark {
-  --text-strong: #ecf3ff;
-  --text-muted: #b9c8e5;
-  --glass-border: rgba(186, 218, 255, 0.22);
-  --glass-top: rgba(29, 43, 72, 0.62);
-  --glass-bottom: rgba(18, 26, 45, 0.48);
-  --glass-shadow: 0 28px 58px -30px rgba(0, 0, 0, 0.75);
+  --text-strong: #e6ecf7;
+  --text-muted: #b1bbce;
+  --glass-border: rgba(170, 183, 205, 0.2);
+  --glass-top: rgba(37, 46, 63, 0.56);
+  --glass-bottom: rgba(26, 34, 49, 0.44);
+  --glass-shadow: 0 24px 52px -34px rgba(0, 0, 0, 0.64);
   color: var(--text-strong);
   background:
-    radial-gradient(circle at 14% 10%, rgba(66, 110, 188, 0.4) 0%, transparent 34%),
-    radial-gradient(circle at 100% 0%, rgba(86, 122, 219, 0.3) 0%, transparent 40%),
-    linear-gradient(160deg, #080d1e 0%, #0d162b 45%, #0a1224 100%);
+    radial-gradient(circle at 14% 10%, rgba(92, 111, 146, 0.3) 0%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(82, 102, 136, 0.26) 0%, transparent 42%),
+    linear-gradient(160deg, #0f1420 0%, #141b2a 45%, #101725 100%);
 }
 
 .ambient {
@@ -246,20 +246,20 @@ body {
   border-radius: 999px;
   filter: blur(48px);
   pointer-events: none;
-  opacity: 0.72;
+  opacity: 0.5;
   animation-duration: 7.8s;
   animation-iteration-count: infinite;
   animation-timing-function: ease-in-out;
 }
 
 .app-shell.theme-dark .ambient {
-  opacity: 0.36;
+  opacity: 0.24;
 }
 
 .ambient-a {
   width: 320px;
   height: 320px;
-  background: #9fc0ff;
+  background: #d2deef;
   top: -84px;
   left: -70px;
   animation-name: drift-a;
@@ -268,7 +268,7 @@ body {
 .ambient-b {
   width: 300px;
   height: 300px;
-  background: #b2d6ff;
+  background: #dbe5f3;
   bottom: -90px;
   right: -60px;
   animation-name: drift-b;
@@ -277,7 +277,7 @@ body {
 .ambient-c {
   width: 220px;
   height: 220px;
-  background: #d4e6ff;
+  background: #e6edf8;
   left: 38%;
   top: 12%;
   animation-name: drift-c;
@@ -286,7 +286,7 @@ body {
 .ambient-d {
   width: 180px;
   height: 180px;
-  background: #adc4ff;
+  background: #cad9ef;
   right: 24%;
   bottom: 18%;
   animation-name: drift-d;
@@ -318,7 +318,7 @@ body {
 
 .app-shell :deep(.n-button:not(.n-button--disabled):hover) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px -18px rgba(36, 85, 168, 0.75);
+  box-shadow: 0 10px 24px -18px rgba(87, 105, 138, 0.42);
 }
 
 @media (max-width: 768px) {
