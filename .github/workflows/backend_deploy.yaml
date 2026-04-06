@@ -5,6 +5,9 @@ on:
     workflows: [Upstream Sync]
     types: [completed]
   push:
+    branches:
+      - main
+      - tmail-custom
     tags:
       - "*"
   workflow_dispatch:
