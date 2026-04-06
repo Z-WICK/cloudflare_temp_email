@@ -88,6 +88,58 @@ const allowRandomSubdomainForDomain = (
     return getRandomSubdomainDomains(c).includes(domain);
 }
 
+/**
+ * Auto-create Cloudflare Email Routing rule for a new random subdomain.
+ * Uses CF_API_TOKEN + CF_ZONE_ID env vars to call the Cloudflare API.
+ * Runs asynchronously via waitUntil — does not block the address creation response.
+ */
+const ensureEmailRoutingRule = (
+    c: Context<HonoCustomType>,
+    subdomain: string,
+    domain: string
+): void => {
+    const apiToken = c.env.CF_API_TOKEN;
+    const zoneId = c.env.CF_ZONE_ID;
+    if (!apiToken || !zoneId) {
+        console.warn("[ensureEmailRoutingRule] CF_API_TOKEN or CF_ZONE_ID not configured, skipping");
+        return;
+    }
+
+    const matchPattern = `*@${subdomain}.${domain}`;
+    c.executionCtx.waitUntil(
+        fetch(
+            `https://api.cloudflare.com/client/v4/zones/${zoneId}/email/routing/rules`,
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    matchers: [{ type: "literal", field: "to", value: matchPattern }],
+                    actions: [{ type: "worker", value: ["cloudflare_temp_email"] }],
+                    enabled: true,
+                    name: `${subdomain} catch-all`,
+                    priority: 0,
+                }),
+            }
+        )
+            .then(async (res) => {
+                if (!res.ok) {
+                    const body = await res.text().catch(() => "");
+                    console.error(
+                        `[ensureEmailRoutingRule] Failed to create rule for ${matchPattern}: status=${res.status} body=${body.slice(0, 200)}`
+                    );
+                } else {
+                    console.log(`[ensureEmailRoutingRule] Created routing rule for ${matchPattern}`);
+                }
+            })
+            .catch((err) => {
+                console.error(`[ensureEmailRoutingRule] Error creating routing rule for ${matchPattern}:`, err);
+            })
+    );
+}
+
 const checkNameRegex = (c: Context<HonoCustomType>, name: string) => {
     let error = null;
     try {
@@ -282,6 +334,12 @@ export const newAddress = async (
         try {
             await insertAddressRecord(c, address, sourceMeta, msgs);
             await updateAddressUpdatedAt(c, address);
+
+            // Auto-create email routing rule for random subdomain
+            if (enableRandomSubdomain) {
+                const subdomain = addressDomain.split('.')[0];
+                ensureEmailRoutingRule(c, subdomain, domain);
+            }
 
             const address_id = await c.env.DB.prepare(
                 `SELECT id FROM address where name = ?`

@@ -97,6 +97,10 @@ type Bindings = {
     ENABLE_AI_EMAIL_EXTRACT: string | boolean | undefined
     AI_EXTRACT_MODEL: string | undefined
 
+    // Cloudflare API for auto-creating email routing rules
+    CF_API_TOKEN: string | undefined
+    CF_ZONE_ID: string | undefined
+
     // E2E testing
     E2E_TEST_MODE: string | boolean | undefined
 }
