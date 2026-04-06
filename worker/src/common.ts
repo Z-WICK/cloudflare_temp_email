@@ -11,29 +11,6 @@ import i18n from './i18n';
 const DEFAULT_NAME_REGEX = /[^a-z0-9]/g;
 const DEFAULT_RANDOM_SUBDOMAIN_LENGTH = 8;
 const MAX_RANDOM_SUBDOMAIN_ATTEMPTS = 5;
-const EMAIL_ROUTING_WORKER_NAME = "cloudflare_temp_email";
-
-type CloudflareEmailRoutingMatcher = {
-    type?: string;
-    field?: string;
-    value?: string;
-}
-
-type CloudflareEmailRoutingAction = {
-    type?: string;
-    value?: string[];
-}
-
-type CloudflareEmailRoutingRule = {
-    id?: string;
-    name?: string;
-    matchers?: CloudflareEmailRoutingMatcher[];
-    actions?: CloudflareEmailRoutingAction[];
-}
-
-type CloudflareEmailRoutingRuleListResponse = {
-    result?: CloudflareEmailRoutingRule[];
-}
 
 /**
  * Check if send mail is enabled for a specific domain
@@ -140,7 +117,7 @@ const ensureEmailRoutingRule = (
                 },
                 body: JSON.stringify({
                     matchers: [{ type: "literal", field: "to", value: matchPattern }],
-                    actions: [{ type: "worker", value: [EMAIL_ROUTING_WORKER_NAME] }],
+                    actions: [{ type: "worker", value: ["cloudflare_temp_email"] }],
                     enabled: true,
                     name: `${subdomain} catch-all`,
                     priority: 0,
@@ -160,123 +137,6 @@ const ensureEmailRoutingRule = (
             .catch((err) => {
                 console.error(`[ensureEmailRoutingRule] Error creating routing rule for ${matchPattern}:`, err);
             })
-    );
-}
-
-const getRandomSubdomainRouteInfoByAddress = (
-    c: Context<HonoCustomType>,
-    address: string
-): {
-    matchPattern: string;
-    routeName: string;
-} | null => {
-    const atIndex = address.lastIndexOf("@");
-    if (atIndex < 0) {
-        return null;
-    }
-    const addressDomain = address.slice(atIndex + 1).toLowerCase();
-    const randomSubdomainDomains = getRandomSubdomainDomains(c).map((item) => item.toLowerCase());
-    for (const domain of randomSubdomainDomains) {
-        const suffix = `.${domain}`;
-        if (!addressDomain.endsWith(suffix)) {
-            continue;
-        }
-        const subdomain = addressDomain.slice(0, -suffix.length);
-        // Keep cleanup conservative: only auto-generated one-level subdomain routes.
-        if (!subdomain || subdomain.includes(".")) {
-            continue;
-        }
-        return {
-            matchPattern: `*@${subdomain}.${domain}`,
-            routeName: `${subdomain} catch-all`,
-        };
-    }
-    return null;
-}
-
-export const cleanupEmailRoutingRuleByAddress = (
-    c: Context<HonoCustomType>,
-    address: string
-): void => {
-    const apiToken = c.env.CF_API_TOKEN;
-    const zoneId = c.env.CF_ZONE_ID;
-    const routeInfo = getRandomSubdomainRouteInfoByAddress(c, address);
-    if (!routeInfo) {
-        return;
-    }
-    if (!apiToken || !zoneId) {
-        console.warn("[cleanupEmailRoutingRuleByAddress] CF_API_TOKEN or CF_ZONE_ID not configured, skipping");
-        return;
-    }
-
-    const authHeaders = {
-        "Authorization": `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-    };
-    const expectedMatcher = routeInfo.matchPattern.toLowerCase();
-
-    c.executionCtx.waitUntil(
-        (async () => {
-            try {
-                const listRes = await fetch(
-                    `https://api.cloudflare.com/client/v4/zones/${zoneId}/email/routing/rules`,
-                    { headers: authHeaders }
-                );
-                if (!listRes.ok) {
-                    const body = await listRes.text().catch(() => "");
-                    console.error(
-                        `[cleanupEmailRoutingRuleByAddress] Failed to query rules for ${routeInfo.matchPattern}: status=${listRes.status} body=${body.slice(0, 200)}`
-                    );
-                    return;
-                }
-                const listData = await listRes.json() as CloudflareEmailRoutingRuleListResponse;
-                const rules = Array.isArray(listData.result) ? listData.result : [];
-                const matchedRules = rules.filter((rule) => {
-                    const hasMatcher = (rule.matchers || []).some((matcher) =>
-                        matcher.type === "literal"
-                        && matcher.field === "to"
-                        && typeof matcher.value === "string"
-                        && matcher.value.toLowerCase() === expectedMatcher
-                    );
-                    if (!hasMatcher) {
-                        return false;
-                    }
-                    const hasExpectedWorkerAction = (rule.actions || []).some((action) =>
-                        action.type === "worker"
-                        && Array.isArray(action.value)
-                        && action.value.includes(EMAIL_ROUTING_WORKER_NAME)
-                    );
-                    return hasExpectedWorkerAction || rule.name === routeInfo.routeName;
-                });
-                if (matchedRules.length === 0) {
-                    console.log(`[cleanupEmailRoutingRuleByAddress] No matched routing rule found for ${routeInfo.matchPattern}`);
-                    return;
-                }
-
-                for (const rule of matchedRules) {
-                    if (!rule.id) {
-                        continue;
-                    }
-                    const deleteRes = await fetch(
-                        `https://api.cloudflare.com/client/v4/zones/${zoneId}/email/routing/rules/${rule.id}`,
-                        {
-                            method: "DELETE",
-                            headers: authHeaders,
-                        }
-                    );
-                    if (!deleteRes.ok) {
-                        const body = await deleteRes.text().catch(() => "");
-                        console.error(
-                            `[cleanupEmailRoutingRuleByAddress] Failed to delete rule ${rule.id} for ${routeInfo.matchPattern}: status=${deleteRes.status} body=${body.slice(0, 200)}`
-                        );
-                    } else {
-                        console.log(`[cleanupEmailRoutingRuleByAddress] Deleted routing rule ${rule.id} for ${routeInfo.matchPattern}`);
-                    }
-                }
-            } catch (error) {
-                console.error(`[cleanupEmailRoutingRuleByAddress] Error deleting routing rule for ${routeInfo.matchPattern}:`, error);
-            }
-        })()
     );
 }
 
@@ -650,7 +510,6 @@ export const deleteAddressWithData = async (
     if (!address || !address_id) {
         throw new Error(msgs.AddressNotFoundMsg);
     }
-    cleanupEmailRoutingRuleByAddress(c, address);
     // unbind telegram
     await unbindTelegramByAddress(c, address);
     // delete address and related data
