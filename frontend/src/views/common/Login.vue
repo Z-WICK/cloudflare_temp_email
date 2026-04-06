@@ -48,7 +48,7 @@ const credential = ref('')
 const emailName = ref("")
 const emailDomain = ref("")
 const cfToken = ref("")
-const enableRandomSubdomain = ref(false)
+const enableRandomSubdomain = ref(true)
 const loginCfToken = ref("")
 const loginTurnstileRef = ref(null)
 const loginMethod = ref('credential') // 'credential' or 'password'
@@ -370,14 +370,7 @@ onMounted(async () => {
                             <n-select v-model:value="emailDomain" :consistent-menu-width="false"
                                 :options="domainsOptions" />
                         </n-input-group>
-                        <n-form-item-row v-if="canUseRandomSubdomain">
-                            <n-checkbox v-model:checked="enableRandomSubdomain">
-                                {{ t('enableRandomSubdomain') }}
-                            </n-checkbox>
-                            <p style="margin: 8px 0 0; opacity: 0.75;">
-                                {{ t('randomSubdomainTip') }}
-                            </p>
-                        </n-form-item-row>
+                        <!-- Random subdomain forced on, checkbox hidden -->
                         <Turnstile v-model:value="cfToken" />
                         <n-button type="primary" block secondary strong @click="newEmail" :loading="loading">
                             <template #icon>
